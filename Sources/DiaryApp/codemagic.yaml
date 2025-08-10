@@ -1,0 +1,33 @@
+workflows:
+  build-ios:
+    name: Build iOS IPA
+    max_build_duration: 120
+    environment:
+      vars:
+        APP_BUNDLE_ID: com.yourcompany.diaryapp # override in Codemagic UI
+        TEAM_ID: YOUR_TEAM_ID # override in Codemagic UI
+    scripts:
+      - name: Install XcodeGen
+        script: |
+          brew update || true
+          brew install xcodegen || brew upgrade xcodegen || true
+      - name: Generate Xcode project
+        script: |
+          xcodegen generate --spec project.yml
+      - name: List project files
+        script: |
+          ls -la
+          ls -la Sources/DiaryApp
+      - name: Build Archive
+        script: |
+          set -o pipefail
+          xcodebuild -project DiaryApp.xcodeproj -scheme DiaryApp -configuration Release -archivePath $CM_BUILD_DIR/DiaryApp.xcarchive archive | xcpretty || true
+      - name: Export IPA
+        script: |
+          xcodebuild -exportArchive -archivePath $CM_BUILD_DIR/DiaryApp.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath $CM_OUTPUT_DIR | xcpretty || true
+    artifacts:
+      - $CM_OUTPUT_DIR/*.ipa
+    publishing:
+      email:
+        recipients:
+          - bilalsaghir.uk@gmail.com
