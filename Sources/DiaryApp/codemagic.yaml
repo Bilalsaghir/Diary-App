@@ -1,33 +1,33 @@
 workflows:
-  build-ios:
-    name: Build iOS IPA
-    max_build_duration: 120
+  ios-workflow:
+    name: Build iOS IPA with XcodeGen
     environment:
-      vars:
-        APP_BUNDLE_ID: com.yourcompany.diaryapp # override in Codemagic UI
-        TEAM_ID: YOUR_TEAM_ID # override in Codemagic UI
+      xcode: latest
+      cocoapods: default
+      swift: latest
     scripts:
       - name: Install XcodeGen
         script: |
-          brew update || true
-          brew install xcodegen || brew upgrade xcodegen || true
+          brew install xcodegen || echo "XcodeGen already installed"
       - name: Generate Xcode project
         script: |
-          xcodegen generate --spec project.yml
-      - name: List project files
+          xcodegen generate
+      - name: Install dependencies
         script: |
-          ls -la
-          ls -la Sources/DiaryApp
-      - name: Build Archive
+          pod install || echo "No pods to install"
+      - name: Build IPA
         script: |
-          set -o pipefail
-          xcodebuild -project DiaryApp.xcodeproj -scheme DiaryApp -configuration Release -archivePath $CM_BUILD_DIR/DiaryApp.xcarchive archive | xcpretty || true
-      - name: Export IPA
-        script: |
-          xcodebuild -exportArchive -archivePath $CM_BUILD_DIR/DiaryApp.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath $CM_OUTPUT_DIR | xcpretty || true
+          xcodebuild -workspace DiaryApp.xcworkspace -scheme DiaryApp -sdk iphoneos -configuration Release archive -archivePath $CM_BUILD_DIR/DiaryApp.xcarchive
+          xcodebuild -exportArchive -archivePath $CM_BUILD_DIR/DiaryApp.xcarchive -exportPath $CM_BUILD_DIR/ -exportOptionsPlist ExportOptions.plist
     artifacts:
-      - $CM_OUTPUT_DIR/*.ipa
+      - $CM_BUILD_DIR/*.ipa
     publishing:
       email:
         recipients:
           - bilalsaghir.uk@gmail.com
+        on_success: always
+        on_failure: always
+    triggers:
+      - event: push
+        branch:
+          - main
