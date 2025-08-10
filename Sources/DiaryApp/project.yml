@@ -1,0 +1,27 @@
+name: DiaryApp
+options:
+  bundleIdPrefix: com.yourcompany
+configs:
+  Debug: debug
+  Release: release
+settings:
+  IPHONEOS_DEPLOYMENT_TARGET: '16.0'
+  SWIFT_VERSION: '5.0'
+targets:
+  DiaryApp:
+    type: application
+    platform: iOS
+    deploymentTarget: '16.0'
+    sources:
+      - path: Sources/DiaryApp
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.yourcompany.diaryapp
+    scheme:
+      testTargets: []
+
+schemes:
+  DiaryApp:
+    build:
+      targets:
+        - target: DiaryApp
+          configuration: Release
